@@ -9,10 +9,13 @@ load_dotenv()
 
 url: str = os.getenv("SUPABASE_URL")
 key: str = os.getenv("SUPABASE_KEY")
-supabase: Client = create_client(url, key)
+if url and key:
+    supabase: Client = create_client(url, key)
 
 # comando pra rodar: uvicorn main:app --reload
 app = FastAPI()
+
+app.include_router(auth_router)
 
 if __name__ == "__main__":
     uvicorn.run("main:app", port=8000, reload=True)
