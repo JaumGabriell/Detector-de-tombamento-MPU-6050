@@ -1,6 +1,6 @@
 # TumbleGuard - Detector de Tombamento com MPU-6050
 
-> 🚗 Sistema de detecção de tombamento veicular utilizando sensor MPU-6050 e Raspberry Pi com notificações via Telegram.
+> � Sistema de detecção de tombamento utilizando sensor MPU-6050 e Raspberry Pi com notificações via Telegram.
 
 **Status:** 🚧 Em desenvolvimento (Projeto de TCC)
 
@@ -8,7 +8,15 @@
 
 ## 📋 Descrição
 
-O **TumbleGuard** é um sistema embarcado de segurança veicular que monitora continuamente a inclinação do veículo através de um sensor acelerômetro/giroscópio MPU-6050. Quando um tombamento é detectado (inclinação superior a 45°), o sistema envia automaticamente um alerta de emergência via Telegram.
+O **TumbleGuard** é um sistema embarcado de segurança que monitora continuamente a inclinação de objetos, equipamentos ou estruturas através de um sensor acelerômetro/giroscópio MPU-6050. Quando um tombamento é detectado (inclinação superior a 45°), o sistema envia automaticamente um alerta de emergência via Telegram.
+
+**Aplicações:**
+
+- Veículos e máquinas pesadas
+- Equipamentos industriais
+- Containers e cargas
+- Estruturas e mobiliário
+- Qualquer objeto que necessite monitoramento de inclinação
 
 ---
 
@@ -124,7 +132,7 @@ pip install requests smbus
 
 ```
 ============================================================
-🚗 TumbleGuard - Sistema de Detecção de Tombamento
+� TumbleGuard - Sistema de Detecção de Tombamento
 ============================================================
 
 🌐 IP da Raspberry Pi: 192.168.1.100
@@ -135,7 +143,7 @@ Pressione Ctrl+C para parar todos os serviços
 
 [0001] X=0.02 Y=-0.01 Z=1.00 | ✅ OK, 1.15°
 [0002] X=0.03 Y=-0.02 Z=0.99 | ✅ OK, 2.06°
-[0003] X=0.85 Y=0.45 Z=0.20 | 🚨 TOMBADO, 78.32°
+[0003] X=0.85 Y=0.45 Z=0.20 | ⚠️ TOMBADO, 78.32°
 ⚠️  🚨 TOMBAMENTO DETECTADO! Enviando alerta...
    ✅ Alerta enviado ao Telegram com sucesso!
 ```
