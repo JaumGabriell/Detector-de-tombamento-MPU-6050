@@ -3,12 +3,12 @@ import { Client } from 'paho-mqtt'
 import { MQTT_CONFIG } from '../config/mqtt'
 
 const initialTelemetry = {
-  x: '0.02',
-  y: '-0.01',
-  z: '9.81',
-  angle: '1.2°',
+  x: '0.00',
+  y: '0.00',
+  z: '0.00',
+  angle: '0.0°',
   fallen: false,
-  lastUpdate: 'Sem dados',
+  lastUpdate: 'Sem conexão',
 }
 
 export function useMqttTelemetry() {
@@ -23,7 +23,10 @@ export function useMqttTelemetry() {
       `dashboard_${Math.random().toString(16).slice(2, 10)}`,
     )
 
-    client.onConnectionLost = () => setConnection('Desconectado')
+    client.onConnectionLost = () => {
+      setConnection('Desconectado')
+      setTelemetry(initialTelemetry)
+    }
     client.onMessageArrived = (message) => {
       try {
         const data = JSON.parse(message.payloadString)
@@ -49,7 +52,10 @@ export function useMqttTelemetry() {
         setConnection('Conectado')
         client.subscribe(MQTT_CONFIG.topic)
       },
-      onFailure: () => setConnection('Sem conexão'),
+      onFailure: () => {
+        setConnection('Sem conexão')
+        setTelemetry(initialTelemetry)
+      },
     })
 
     return () => {

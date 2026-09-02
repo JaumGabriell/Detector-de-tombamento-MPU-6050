@@ -2,14 +2,13 @@ import { useState } from 'react'
 
 export function TelegramSettings() {
   const saved = JSON.parse(localStorage.getItem('sentinela-telegram') || '{}')
-  const [token, setToken] = useState(saved.token || '')
   const [chatId, setChatId] = useState(saved.chatId || '')
   const [message, setMessage] = useState('')
-  const configured = Boolean(token && chatId)
+  const configured = Boolean(chatId)
 
   function save(event) {
     event.preventDefault()
-    localStorage.setItem('sentinela-telegram', JSON.stringify({ token, chatId }))
+    localStorage.setItem('sentinela-telegram', JSON.stringify({ chatId }))
     setMessage('Configuração salva neste navegador.')
   }
 
@@ -27,16 +26,7 @@ export function TelegramSettings() {
       </div>
       <form className="telegram-form" onSubmit={save}>
         <label>
-          Bot Token
-          <input
-            type="password"
-            value={token}
-            onChange={(event) => setToken(event.target.value)}
-            placeholder="Cole o token do seu bot"
-          />
-        </label>
-        <label>
-          Chat ID
+          Chat ID do Telegram
           <input
             value={chatId}
             onChange={(event) => setChatId(event.target.value)}
