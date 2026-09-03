@@ -4,14 +4,15 @@ import sqlite3
 from fastapi import FastAPI
 from dotenv import load_dotenv
 from routes.auth_routes import auth_router
+from passlib.context import CryptContext
 
 load_dotenv()
 
-# comando pra rodar: uvicorn main:app --reload
+SECRET_KEY = os.getenv("SECRET_KEY")
+
 app = FastAPI()
 
 app.include_router(auth_router)
-
 
 #Cria o banco de dados
 def init_db():
