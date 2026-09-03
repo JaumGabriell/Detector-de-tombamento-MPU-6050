@@ -1,8 +1,8 @@
 ## Run
 Para rodar o backend voce deve executar todos os comandos dentro do ambiente virtual criado com as libs instaladas de acordo com o `requirements.txt` e todos os comandos devem estar dentro da pasta `backend/` caso contrario o banco e todas as outras coisas vão ser executadas no contexto errado então:
 1. **Ative seu ambiente virtual de python**
-2. **Rode para instalar dependencias:** `pip install -r requirements.txt`
-3. **Rode:** `cd backend/` para entrar na pasta correta
+2. **Rode:** `cd backend/` para entrar na pasta correta
+3. **Rode para instalar dependencias:** `pip install -r requirements.txt`
 4. **Configure o aruivo .env**
 5. **Rode as migrations em:** [Migrations](#migrations)
 6. **Rode para iniciar:** `python main.py`
