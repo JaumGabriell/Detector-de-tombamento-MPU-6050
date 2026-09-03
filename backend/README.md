@@ -21,6 +21,9 @@ Para rodar o backend voce deve executar todos os comandos dentro do ambiente vir
 O arquivo .env deve estar dentro de `backend/` e deve conter: 
 * JWT_ACCESS_TOKEN_EXPIRE_MINUTES=tempo_em_minutos
 * SECRET_KEY=
+* HASH_ALGORITHM=algum_algoritmo_de_hashing
+
+o algoritmo de hashing não é obrigatorio pois tem valor padrão dentro do codigo
 
 estes podem ser copiados de `backend/.env.example`
 

@@ -5,7 +5,7 @@ import bcrypt
 from fastapi import HTTPException, status
 from jose import jwt
 
-ALGORITHM = "HS256"
+ALGORITHM = os.getenv("ALGORITHM","HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
 
@@ -27,6 +27,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
 
 
-def create_access_token(subject: str) -> str:
-    expires_at = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+def create_jwt_token(subject: str, duration: timedelta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)) -> str:
+    expires_at = datetime.now(timezone.utc) + duration
     return jwt.encode({"sub": subject, "exp": expires_at}, _get_secret_key(), algorithm=ALGORITHM)
+
+
+def verify_token(token):
+    return jwt.decode(token, _get_secret_key(), algorithms=ALGORITHM)
