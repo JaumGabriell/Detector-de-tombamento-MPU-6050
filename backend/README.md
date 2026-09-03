@@ -28,3 +28,78 @@ A secret key pode ser gerada usando o seguinte comando no powershell do windows 
 ```bash
     openssl rand -base64 32
 ```
+
+## Rotas
+
+### Criar usuário
+
+Método e rota: `POST /auth/`
+Parâmetros de URL: nenhum.
+
+Corpo da requisição:
+```json
+{
+  "name": "Maria Silva",
+  "email": "maria@email.com",
+  "password": "senhaSegura123"
+}
+```
+
+Respostas:
+
+- `201 Created` — usuário criado.
+  ```json
+  {
+    "id": 1,
+    "name": "Maria Silva",
+    "email": "maria@email.com",
+    "admin": false
+  }
+  ```
+- `409 Conflict` — já existe um usuário com o e-mail informado.
+  ```json
+  { "detail": "Já existe um usuário com este e-mail." }
+  ```
+- `422 Unprocessable Entity` — corpo inválido (por exemplo, e-mail inválido ou senha com menos de 8 caracteres).
+  ```json
+  {
+    "detail": [
+      { "msg": "...", "type": "..." }
+    ]
+  }
+  ```
+
+### Login
+
+Método e rota: `POST /auth/login`
+Parâmetros de URL: nenhum.
+
+Corpo da requisição:
+```json
+{
+  "email": "maria@email.com",
+  "password": "senhaSegura123"
+}
+```
+
+Respostas:
+
+- `200 OK` — credenciais válidas.
+  ```json
+  {
+    "access_token": "<token JWT>",
+    "token_type": "bearer"
+  }
+  ```
+- `401 Unauthorized` — e-mail ou senha inválidos.
+  ```json
+  { "detail": "E-mail ou senha inválidos." }
+  ```
+- `422 Unprocessable Entity` — corpo inválido (por exemplo, e-mail inválido ou campos ausentes).
+  ```json
+  {
+    "detail": [
+      { "msg": "...", "type": "..." }
+    ]
+  }
+  ```
