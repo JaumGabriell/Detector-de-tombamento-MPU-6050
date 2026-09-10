@@ -4,6 +4,7 @@ import sqlite3
 from fastapi import FastAPI
 from dotenv import load_dotenv
 from routes.auth_routes import auth_router
+from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()
 
@@ -11,6 +12,14 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 app = FastAPI()
 app.include_router(auth_router)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
 #Cria o banco de dados
 def init_db():

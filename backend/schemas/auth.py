@@ -67,3 +67,10 @@ class Token(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "Bearer"
+
+
+class ChatIdUpdate(BaseModel):
+    chat_id: str = Field(min_length=1, max_length=50)
+
+class ChatIdResponse(BaseModel):
+    chat_id: str
