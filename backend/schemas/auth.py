@@ -61,6 +61,7 @@ class UserResponse(BaseModel):
     name: str
     email: str
     admin: bool
+    chat_id: str | None = None
 
 
 class Token(BaseModel):
