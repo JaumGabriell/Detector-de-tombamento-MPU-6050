@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session
 from core.security import create_jwt_token, hash_password, verify_password, verify_token
 from dependencies import get_session, get_authenticated_user
 from models import User
-from schemas.auth import LoginRequest, Token, UserCreate, UserResponse, ChatIdUpdate
+from schemas.auth import LoginRequest, Token, UserCreate
+from schemas.user import UserResponse, ChatIdUpdate
 from datetime import timedelta
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
