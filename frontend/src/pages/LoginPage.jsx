@@ -1,15 +1,29 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { login } from '../config/api'
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [showPassword, setShowPassword] = useState(false)
-  const [message, setMessage] = useState('')
+  const [message, setMessage] = useState(location.state?.message || '')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  function enterHome(event) {
+  async function enterHome(event) {
     event.preventDefault()
-    localStorage.setItem('sentinela-auth', 'true')
-    navigate('/home')
+    setMessage('')
+    setIsSubmitting(true)
+    localStorage.removeItem('sentinela-auth')
+    const formData = new FormData(event.currentTarget)
+
+    try {
+      await login(formData.get('email'), formData.get('password'))
+      navigate('/home', { replace: true })
+    } catch (error) {
+      setMessage(error.message)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -64,10 +78,13 @@ export function LoginPage() {
               Esqueci minha senha
             </button>
           </div>
-          <button className="primary-button" type="submit">
-            Entrar na central <span>→</span>
+          <button className="primary-button" type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Entrando...' : 'Entrar na central'} <span>→</span>
           </button>
           <p className="form-message">{message}</p>
+          <p className="auth-switch">
+            Ainda não possui uma conta? <Link to="/register">Criar cadastro</Link>
+          </p>
         </form>
       </section>
     </main>

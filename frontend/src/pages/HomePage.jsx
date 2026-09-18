@@ -1,17 +1,32 @@
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { Brand } from '../components/Brand'
 import { MetricCard } from '../components/MetricCard'
 import { TelegramSettings } from '../components/TelegramSettings'
 import { MQTT_CONFIG } from '../config/mqtt'
 import { useMqttTelemetry } from '../hooks/useMqttTelemetry'
+import { getCurrentUser } from '../config/api'
 
 export function HomePage() {
   const navigate = useNavigate()
   const { telemetry, connection } = useMqttTelemetry()
+  const [user, setUser] = useState(null)
   const isConnected = connection === 'Conectado'
+
+  useEffect(() => {
+    getCurrentUser()
+      .then(setUser)
+      .catch((error) => {
+        if (error.status === 401) {
+          localStorage.removeItem('sentinela-auth')
+          navigate('/login', { replace: true })
+        }
+      })
+  }, [navigate])
 
   function logout() {
     localStorage.removeItem('sentinela-auth')
+    localStorage.removeItem('sentinela-telegram')
     navigate('/login')
   }
 
@@ -19,6 +34,14 @@ export function HomePage() {
     <div className="app-shell">
       <aside className="sidebar">
         <Brand compact />
+        <nav className="sidebar-nav" aria-label="Navegação principal">
+          <NavLink to="/home" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
+            Início
+          </NavLink>
+          <NavLink to="/gps" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
+            Visualizar GPS
+          </NavLink>
+        </nav>
         <div className="sidebar-footer">
           <span className="online-dot" /> Sistema operacional
           <button className="logout-button" onClick={logout}>Sair da conta</button>
@@ -30,7 +53,7 @@ export function HomePage() {
             <p className="eyebrow">CENTRAL DE MONITORAMENTO</p>
             <h1>Visão geral</h1>
           </div>
-          <div className="user-chip"><span className="avatar">AC</span><span>Administrador</span></div>
+          <div className="user-chip"><span className="avatar">{user?.name?.slice(0, 2).toUpperCase() || 'AC'}</span><span>{user?.name || 'Carregando...'}</span></div>
         </header>
         <section className="hero-banner">
           <div>

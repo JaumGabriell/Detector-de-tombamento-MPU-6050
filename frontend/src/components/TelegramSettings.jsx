@@ -1,15 +1,36 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { getCurrentUser, updateChatId } from '../config/api'
 
 export function TelegramSettings() {
-  const saved = JSON.parse(localStorage.getItem('sentinela-telegram') || '{}')
-  const [chatId, setChatId] = useState(saved.chatId || '')
+  const [chatId, setChatId] = useState('')
   const [message, setMessage] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
   const configured = Boolean(chatId)
 
-  function save(event) {
+  useEffect(() => {
+    getCurrentUser()
+      .then((user) => {
+        setChatId(user.chat_id || '')
+        setIsEditing(!user.chat_id)
+      })
+      .catch(() => {})
+  }, [])
+
+  async function save(event) {
     event.preventDefault()
-    localStorage.setItem('sentinela-telegram', JSON.stringify({ chatId }))
-    setMessage('Configuração salva neste navegador.')
+    setMessage('')
+    setIsSaving(true)
+
+    try {
+      await updateChatId(chatId)
+      setIsEditing(false)
+      setMessage('Configuração salva com sucesso.')
+    } catch (error) {
+      setMessage(error.message)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -27,15 +48,33 @@ export function TelegramSettings() {
       <form className="telegram-form" onSubmit={save}>
         <label>
           Chat ID do Telegram
-          <input
-            value={chatId}
-            onChange={(event) => setChatId(event.target.value)}
-            placeholder="Ex.: -1001234567890"
-          />
+          {isEditing ? (
+            <input
+              value={chatId}
+              onChange={(event) => setChatId(event.target.value)}
+              placeholder="Ex.: -1001234567890"
+              autoFocus
+            />
+          ) : (
+            <span className="telegram-chat-id">{chatId}</span>
+          )}
         </label>
-        <button className="primary-button compact" type="submit">
-          Salvar configuração <span>→</span>
-        </button>
+        {isEditing ? (
+          <button className="primary-button compact" type="submit" disabled={isSaving || !chatId.trim()}>
+            {isSaving ? 'Salvando...' : 'Salvar configuração'} <span>→</span>
+          </button>
+        ) : (
+          <button
+            className="primary-button compact"
+            type="button"
+            onClick={() => {
+              setIsEditing(true)
+              setMessage('')
+            }}
+          >
+            Editar <span>↗</span>
+          </button>
+        )}
       </form>
       <p className="form-message">{message}</p>
     </section>
