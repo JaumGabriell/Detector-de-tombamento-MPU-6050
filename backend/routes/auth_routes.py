@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from core.security import create_jwt_token, hash_password, verify_password, verify_token
 from dependencies import get_session, get_authenticated_user
 from models import User
-from schemas.auth import LoginRequest, Token, UserCreate, UserResponse, ChatIdUpdate
+from schemas.auth import LoginRequest, Token, UserCreate, UserResponse
 from datetime import timedelta
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
@@ -90,14 +90,3 @@ def use_refresh_token(user: User = Depends(get_authenticated_user)):
 def get_me(user: User = Depends(get_authenticated_user)):
     return user
 
-@auth_router.put("/chat-id", response_model=UserResponse)
-def update_chat_id(payload: ChatIdUpdate, user: User = Depends(get_authenticated_user), session: Session = Depends(get_session)):
-    user.chat_id = payload.chat_id
-    session.commit()
-    session.refresh(user)
-    return user
-
-@auth_router.get("/chat-ids")
-def index_chat_ids(session: Session = Depends(get_session)):
-    users = session.query(User).filter(User.chat_id.isnot(None)).all()
-    return [{"user_id": u.id, "chat_id": u.chat_id} for u in users]
