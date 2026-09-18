@@ -7,10 +7,10 @@ class UserResponse(BaseModel):
     name: str
     email: str
     admin: bool
-    chat_id: str | None = None
+    #chat_id: str | None = None
 
-class ChatIdUpdate(BaseModel):
+"""class ChatIdUpdate(BaseModel):
     chat_id: str = Field(min_length=1, max_length=50)
 
 class ChatIdResponse(BaseModel):
-    chat_id: str
+    chat_id: str"""

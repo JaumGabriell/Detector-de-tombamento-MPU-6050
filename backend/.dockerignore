@@ -1,0 +1,6 @@
+.env
+.env.*
+README.md
+__pycache__/
+database.db
+docker-compose.yml

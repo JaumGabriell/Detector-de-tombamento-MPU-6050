@@ -1,0 +1,27 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    
+    container_name: FastAPI
+
+    image: tumble-guard
+    ports: 
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+      - db_data:/app/database
+  
+  tunnel:
+    container_name: cloudflared-tunnel
+    image: cloudflare/cloudflared
+    restart: unless-stopped
+    command: tunnel run
+    env_file:
+      - .env
+
+volumes:
+  db_data:
