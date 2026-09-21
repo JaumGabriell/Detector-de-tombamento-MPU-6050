@@ -55,10 +55,25 @@ async def _connect_account(message: dict, session: Session):
         await send_message(chat_id, "Acesso não autorizado. Verifique se o link ainda é válido.")
         return
         
+    existing_account = session.scalar(
+        select(TelegramAccount).where(
+            TelegramAccount.user_id == user_id,
+            TelegramAccount.chat_id == int(chat_id),
+        )
+    )
+
+    if existing_account:
+        await send_message(chat_id, "Este chat já está cadastrado para este usuário.")
+        return
+
     telegram_user = message.get("from", {})
     username = telegram_user["first_name"]
     
-    telegram_account = session.scalar(select(TelegramAccount).where(TelegramAccount.user_id == user_id))
+    telegram_account = session.scalar(
+        select(TelegramAccount)
+        .where(TelegramAccount.user_id == user_id, TelegramAccount.chat_id.is_(None))
+        .order_by(TelegramAccount.id.desc())
+    )
 
     if not telegram_account:
         await send_message(chat_id, "Ocorreu um erro interno ao registrar sua conta.")

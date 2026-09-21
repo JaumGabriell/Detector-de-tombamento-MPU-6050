@@ -11,7 +11,7 @@ from jose import jwt
 ALGORITHM = os.getenv("ALGORITHM","HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 TELEGRAM_TOKEN_VERSION = 1
-TELEGRAM_TOKEN_TTL = 60  # seconds
+TELEGRAM_TOKEN_TTL = 180  # seconds
 
 def _get_secret_key() -> str:
     secret_key = os.getenv("SECRET_KEY")

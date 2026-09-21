@@ -10,3 +10,9 @@ class TelegramAccountResponse(BaseModel):
 
 class TelegramAccountConnection(BaseModel):
     connection_link: str
+
+class TelegramAccountListResponse(BaseModel):
+    items: list[TelegramAccountResponse]
+    page: int
+    total: int
+    pages: int
