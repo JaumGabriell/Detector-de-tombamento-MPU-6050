@@ -6,7 +6,7 @@ from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError
 
-oauth2_schema = OAuth2PasswordBearer(tokenUrl="auth/login-form")
+oauth2_schema = OAuth2PasswordBearer(tokenUrl="auth/login-form", refreshUrl="auth/refresh")
 
 SessionLocal = sessionmaker(bind=db, autoflush=False, autocommit=False)
 

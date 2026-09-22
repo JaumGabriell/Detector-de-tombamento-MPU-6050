@@ -4,10 +4,11 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from core.security import create_jwt_token, hash_password, verify_password, verify_token
+from core.security import create_jwt_token, hash_password, verify_password
 from dependencies import get_session, get_authenticated_user
 from models import User
-from schemas.auth import LoginRequest, Token, UserCreate, UserResponse
+from schemas.auth import LoginRequest, Token, UserCreate
+from schemas.user import UserResponse
 from datetime import timedelta
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
@@ -50,7 +51,7 @@ def login(payload: LoginRequest, session: Session = Depends(get_session)):
         )
 
     access_token = create_jwt_token(str(user.id))
-    refresh_token = create_jwt_token(str(user.id), timedelta(days=1))
+    refresh_token = create_jwt_token(str(user.id), duration=timedelta(days=1))
 
     return Token(
         access_token=access_token,
@@ -69,7 +70,7 @@ def login_form(form: OAuth2PasswordRequestForm = Depends(), session: Session = D
         )
 
     access_token = create_jwt_token(str(user.id))
-    refresh_token = create_jwt_token(str(user.id), timedelta(days=1))
+    refresh_token = create_jwt_token(str(user.id), duration=timedelta(days=1))
 
     return Token(
         access_token=access_token,
@@ -79,7 +80,7 @@ def login_form(form: OAuth2PasswordRequestForm = Depends(), session: Session = D
 @auth_router.get("/refresh", response_model=Token)
 def use_refresh_token(user: User = Depends(get_authenticated_user)):
     access_token = create_jwt_token(str(user.id))
-    refresh_token = create_jwt_token(str(user.id), timedelta(days=1))
+    refresh_token = create_jwt_token(str(user.id), duration=timedelta(days=1))
 
     return Token(
         access_token=access_token,
@@ -89,4 +90,3 @@ def use_refresh_token(user: User = Depends(get_authenticated_user)):
 @auth_router.get("/me", response_model=UserResponse)
 def get_me(user: User = Depends(get_authenticated_user)):
     return user
-

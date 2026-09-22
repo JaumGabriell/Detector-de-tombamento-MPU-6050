@@ -53,25 +53,7 @@ class LoginRequest(BaseModel):
             raise ValueError("A senha não pode exceder 72 bytes.")
         return value
 
-
-class UserResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    name: str
-    email: str
-    admin: bool
-    chat_id: str | None = None
-
-
 class Token(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "Bearer"
-
-
-class ChatIdUpdate(BaseModel):
-    chat_id: str = Field(min_length=1, max_length=50)
-
-class ChatIdResponse(BaseModel):
-    chat_id: str
