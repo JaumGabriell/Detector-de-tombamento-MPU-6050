@@ -23,5 +23,11 @@ services:
     env_file:
       - .env
 
+  broker:
+    container_name: broker
+    image: eclipse-mosquitto
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+
 volumes:
   db_data:
