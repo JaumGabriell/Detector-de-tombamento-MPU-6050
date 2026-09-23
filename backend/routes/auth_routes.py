@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from core.security import create_jwt_token, hash_password, verify_password
-from dependencies import get_session, get_authenticated_user
+from dependencies import get_session, get_authenticated_user, get_authenticated_refresh_user
 from models import User
 from schemas.auth import LoginRequest, Token, UserCreate
 from schemas.user import UserResponse
@@ -51,7 +51,7 @@ def login(payload: LoginRequest, session: Session = Depends(get_session)):
         )
 
     access_token = create_jwt_token(str(user.id))
-    refresh_token = create_jwt_token(str(user.id), duration=timedelta(days=1))
+    refresh_token = create_jwt_token(str(user.id), duration=timedelta(days=1), token_type="refresh")
 
     return Token(
         access_token=access_token,
@@ -70,7 +70,7 @@ def login_form(form: OAuth2PasswordRequestForm = Depends(), session: Session = D
         )
 
     access_token = create_jwt_token(str(user.id))
-    refresh_token = create_jwt_token(str(user.id), duration=timedelta(days=1))
+    refresh_token = create_jwt_token(str(user.id), duration=timedelta(days=1), token_type="refresh")
 
     return Token(
         access_token=access_token,
@@ -78,9 +78,9 @@ def login_form(form: OAuth2PasswordRequestForm = Depends(), session: Session = D
     )
 
 @auth_router.get("/refresh", response_model=Token)
-def use_refresh_token(user: User = Depends(get_authenticated_user)):
+def use_refresh_token(user: User = Depends(get_authenticated_refresh_user)):
     access_token = create_jwt_token(str(user.id))
-    refresh_token = create_jwt_token(str(user.id), duration=timedelta(days=1))
+    refresh_token = create_jwt_token(str(user.id), duration=timedelta(days=1), token_type="refresh")
 
     return Token(
         access_token=access_token,

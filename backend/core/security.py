@@ -6,7 +6,7 @@ import time
 import bcrypt
 from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
-from jose import jwt
+from jose import JWTError, jwt
 
 ALGORITHM = os.getenv("ALGORITHM","HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
@@ -27,17 +27,25 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
 
 
-def create_jwt_token(subject: str, duration: timedelta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)) -> str:
+def create_jwt_token(
+    subject: str,
+    duration: timedelta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+    token_type: str = "access",
+) -> str:
     expires_at = datetime.now(timezone.utc) + duration
     payload = {
         "sub": subject,
-        "exp": expires_at
+        "exp": expires_at,
+        "type": token_type,
     }
 
     return jwt.encode(payload, _get_secret_key(), algorithm=ALGORITHM)
 
-def verify_token(token):
-    return jwt.decode(token, _get_secret_key(), algorithms=ALGORITHM)
+def verify_token(token, expected_type: str = "access"):
+    decoded_token = jwt.decode(token, _get_secret_key(), algorithms=ALGORITHM)
+    if decoded_token.get("type") != expected_type:
+        raise JWTError("Tipo de token inválido")
+    return decoded_token
 
 def create_telegram_token(user_id: int) -> str:
     expires_at = int(time.time()) + TELEGRAM_TOKEN_TTL

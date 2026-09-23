@@ -19,7 +19,19 @@ def get_session():
 
 def get_authenticated_user(token: str = Depends(oauth2_schema), session: Session = Depends(get_session)):
     try:
-        decoded_token = verify_token(token)
+        decoded_token = verify_token(token, expected_type="access")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Acesso negado. Verifique a validade do token")
+    user = session.query(User).filter(User.id==int(decoded_token.get('sub'))).first()
+
+    if not user:
+        raise HTTPException(status_code=401, detail="Acesso Inválido")
+
+    return user
+
+def get_authenticated_refresh_user(token: str = Depends(oauth2_schema), session: Session = Depends(get_session)):
+    try:
+        decoded_token = verify_token(token, expected_type="refresh")
     except JWTError:
         raise HTTPException(status_code=401, detail="Acesso negado. Verifique a validade do token")
     user = session.query(User).filter(User.id==int(decoded_token.get('sub'))).first()
