@@ -28,9 +28,9 @@ async def register_telegram_webhook():
         response.raise_for_status()
         return response.json()
 
-def get_connection_link(user_id: int) -> str:
+def get_connection_link(user_id: int) -> dict:
     telegram_token = create_telegram_token(user_id)
-    return f"{url}?start={telegram_token}"
+    return {"connection_link":f"{url}?start={telegram_token}", "connection_code": telegram_token}
 
 async def send_message(chat_id: str, text: str):
     async with httpx.AsyncClient() as client:
@@ -67,7 +67,10 @@ async def _connect_account(message: dict, session: Session):
         return
 
     telegram_user = message.get("from", {})
-    username = telegram_user["first_name"]
+    if chat["type"] == "group":
+        username = chat["title"]
+    else:
+        username = telegram_user["first_name"]
     
     telegram_account = session.scalar(
         select(TelegramAccount)
@@ -92,18 +95,18 @@ async def process_message(request_secret: str, message: dict, session: Session):
         raise HTTPException(status_code=403, detail="Forbidden")
 
     text = message.get("text")
-
+    
     if not text:
         return
 
     chat = message.get("chat", {})
     chat_type = chat["type"]
 
-    if chat_type != "private":
-        return
+    """if chat_type != "private":
+        return"""
 
-    if message["text"].startswith("/start "):
+    if message["text"].startswith("/start ") or message["text"].startswith("/link "):
         await _connect_account(message, session)
         return
 
-    send_message(chat["id"], "Comando invalido.")
+    await send_message(chat["id"], "Comando invalido.")

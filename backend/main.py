@@ -10,10 +10,6 @@ from routes.telegram_routes import telegram_router
 from fastapi.middleware.cors import CORSMiddleware
 from core.telegram import register_telegram_webhook
 
-from models import Base, db
-from routes.auth_routes import auth_router
-from routes.chat_routes import chat_router
-
 load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")

@@ -10,6 +10,7 @@ class TelegramAccountResponse(BaseModel):
 
 class TelegramAccountConnection(BaseModel):
     connection_link: str
+    connection_code: str
 
 class TelegramAccountListResponse(BaseModel):
     items: list[TelegramAccountResponse]

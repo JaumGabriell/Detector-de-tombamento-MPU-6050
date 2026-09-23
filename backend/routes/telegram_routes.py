@@ -59,7 +59,7 @@ def connect_telegram_account(user: User = Depends(get_authenticated_user), sessi
                     detail="Voce ja tem uma conta de telegram.",
                 )
 
-    return {"connection_link": get_connection_link(user.id)}
+    return get_connection_link(user.id)
 
 @telegram_router.get("/", response_model=TelegramAccountListResponse)
 def get_telegram_accounts(page: int = Query(1, ge=1), user: User = Depends(get_authenticated_user), session: Session = Depends(get_session)):
