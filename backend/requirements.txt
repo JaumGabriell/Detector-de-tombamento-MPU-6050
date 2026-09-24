@@ -10,3 +10,6 @@ python-dotenv
 python-multipart
 httpx
 paho-mqtt
+pydantic-settings
+sqlalchemy[asyncio]
+aiosqlite

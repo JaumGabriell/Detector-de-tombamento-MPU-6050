@@ -23,6 +23,21 @@ services:
     env_file:
       - .env
 
+  mqtt_worker:
+    container_name: mqtt_worker
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: tumble-guard
+    command: ["python", "/app/mqtt_worker.py"]
+    env_file:
+      - .env
+    volumes:
+      - db_data:/app/database
+    depends_on:
+      - web
+      - tunnel
+
   broker:
     container_name: broker
     image: eclipse-mosquitto

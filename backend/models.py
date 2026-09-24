@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Boolean, Column, Integer, String, Uuid, Table, ForeignKey, create_engine
+from sqlalchemy import Boolean, Column, Integer, Float, String, Uuid, Table, DateTime, ForeignKey, create_engine
 from sqlalchemy.orm import declarative_base, relationship
 
 db = create_engine("sqlite:///database/database.db")
@@ -37,18 +37,59 @@ class Sensor(Base):
     id = Column("id", Integer, primary_key=True, autoincrement=True)
     device_id = Column("device_id", Uuid, nullable=False, default=uuid.uuid4)
     name = Column("name", String, nullable=False)
+    mqtt_username = Column("mqtt_username", String, unique=True, nullable=False)
+    mqtt_enabled = Column("mqtt_enabled", Boolean, default=True, nullable=False)
+    last_seen_at = Column("last_seen_at", DateTime(timezone=True), nullable=True)
+    last_state = Column("last_state", String, nullable=True)
     telegram_accounts = relationship("TelegramAccount", secondary=sensor_telegram_accounts, back_populates="sensors")
 
-    def __init__(self, name, device_id = None):
+    def __init__(self, name, device_id = None, mqtt_username = None, mqtt_enabled = True):
         self.name = name
         self.device_id = device_id
+        self.mqtt_username = mqtt_username
+        self.mqtt_enabled = mqtt_enabled
 
     def keys(self):
-        return ["id", "device_id", "name", "telegram_accounts"]
+        return [
+            "id",
+            "device_id",
+            "name",
+            "mqtt_username",
+            "mqtt_enabled",
+            "last_seen_at",
+            "last_state",
+            "telegram_accounts",
+        ]
 
     def __getitem__(self, key):
         return getattr(self, key)
-        
+
+class SensorAlert(Base):
+    __tablename__ = "sensor_alerts"
+
+    id = Column("id", Integer, primary_key=True, autoincrement=True)
+    event_id = Column("event_id", String, unique=True, nullable=False)
+    sensor_id = Column("sensor_id", Integer, ForeignKey("sensors.id"), nullable=False)
+    occurred_at = Column("occurred_at", DateTime(timezone=True), nullable=False)
+    received_at = Column("received_at", DateTime(timezone=True), nullable=False)
+    alert_type = Column("alert_type", String, nullable=False)
+    x = Column("x", Float, nullable=False)
+    y = Column("y", Float, nullable=False)
+    z = Column("z", Float, nullable=False)
+    inclination = Column("inclination", Float, nullable=False)
+
+    def __init__(self, event_id, sensor_id, occurred_at, received_at, alert_type, x, y, z, inclination):
+            self.event_id = event_id
+            self.sensor_id = sensor_id
+            self.occurred_at = occurred_at
+            self.received_at = received_at
+            self.alert_type = alert_type
+            self.x = x
+            self.y = y
+            self.z = z
+            self.inclination = inclination
+
+
 class TelegramAccount(Base):
     __tablename__ = "telegram_accounts"
 
