@@ -165,7 +165,9 @@ Corpo da requisição:
 ```json
 {
   "name": "Sensor 1",
-  "device_id": "550e8400-e29b-41d4-a716-446655440000"
+  "device_id": "550e8400-e29b-41d4-a716-446655440000",
+  "mqtt_username": "sensor-1",
+  "mqtt_enabled": true
 }
 ```
 
@@ -177,9 +179,12 @@ Respostas:
     "id": 1,
     "name": "Sensor 1",
     "device_id": "550e8400-e29b-41d4-a716-446655440000",
+    "mqtt_username": "sensor-1",
+    "mqtt_enabled": true,
     "telegram_accounts": null
   }
   ```
+- `409 Conflict` — username MQTT já associado a outro sensor.
 - `422 Unprocessable Entity` — corpo inválido.
 
 ### Buscar sensor
@@ -195,6 +200,8 @@ Respostas:
     "id": 1,
     "name": "Sensor 1",
     "device_id": "550e8400-e29b-41d4-a716-446655440000",
+    "mqtt_username": "sensor-1",
+    "mqtt_enabled": true,
     "telegram_accounts": [
       {
         "id": 1,
@@ -222,12 +229,16 @@ Respostas:
         "id": 1,
         "name": "Sensor 1",
         "device_id": "550e8400-e29b-41d4-a716-446655440000",
+        "mqtt_username": "sensor-1",
+        "mqtt_enabled": true,
         "telegram_accounts": []
       },
       {
         "id": 2,
         "name": "Sensor 2",
         "device_id": "6ba7b810-9dad-41d1-80b4-00c04fd430c8",
+        "mqtt_username": "sensor-2",
+        "mqtt_enabled": true,
         "telegram_accounts": []
       }
     ],
@@ -246,7 +257,9 @@ Corpo da requisição:
 ```json
 {
   "name": "Sensor atualizado",
-  "device_id": "550e8400-e29b-41d4-a716-446655440000"
+  "device_id": "550e8400-e29b-41d4-a716-446655440000",
+  "mqtt_username": "sensor-1",
+  "mqtt_enabled": true
 }
 ```
 
@@ -258,20 +271,23 @@ Respostas:
     "id": 1,
     "name": "Sensor atualizado",
     "device_id": "550e8400-e29b-41d4-a716-446655440000",
+    "mqtt_username": "sensor-1",
+    "mqtt_enabled": true,
     "telegram_accounts": []
   }
   ```
 - `404 Not Found` — sensor não encontrado.
 - `422 Unprocessable Entity` — corpo inválido.
+- `409 Conflict` — username MQTT já associado a outro sensor.
 
-### Vincular sensor a usuário
+### Vincular sensor a conta do Telegram
 
-Método e rota: `POST /sensor/link/{sensor_id}/{user_id}`
-Parâmetros de URL: `sensor_id` e `user_id` (inteiros).
+Método e rota: `POST /sensor/link/{sensor_id}/{telegram_account_id}`
+Parâmetros de URL: `sensor_id` e `telegram_account_id` (inteiros).
 
 Respostas:
 
-- `200 OK` — sensor vinculado ao usuário.
+- `200 OK` — sensor vinculado à conta do Telegram.
   ```json
   {
     "id": 1,
@@ -287,8 +303,63 @@ Respostas:
     ]
   }
   ```
-- `404 Not Found` — sensor ou usuário não encontrado.
-- `409 Conflict` — sensor já associado ao usuário.
+- `404 Not Found` — sensor ou conta do Telegram não encontrada.
+- `409 Conflict` — conta do Telegram já associada ao sensor.
+
+### Buscar alerta do sensor
+
+Método e rota: `GET /sensor/{sensor_id}/alert/{alert_id}`
+Parâmetros de URL: `sensor_id` e `alert_id` (inteiros).
+
+Respostas:
+
+- `200 OK` — alerta encontrado.
+  ```json
+  {
+    "id": 1,
+    "event_id": "550e8400-e29b-41d4-a716-446655440000",
+    "sensor_id": 1,
+    "sequence": 42,
+    "occurred_at": "2026-09-24T15:30:45Z",
+    "received_at": "2026-09-24T15:30:46Z",
+    "alert_type": "tilt",
+    "value": 38.7,
+    "threshold": 30.0
+  }
+  ```
+- `404 Not Found` — sensor ou alerta não encontrado.
+
+### Listar alertas do sensor
+
+Método e rota: `GET /sensor/{sensor_id}/alert`
+Parâmetros de URL: `sensor_id` (inteiro).
+Parâmetros de consulta: `page` (opcional, padrão `1`).
+
+Respostas:
+
+- `200 OK` — lista paginada de alertas, do mais recente para o mais antigo.
+  ```json
+  {
+    "items": [],
+    "page": 1,
+    "total": 0,
+    "pages": 0
+  }
+  ```
+- `404 Not Found` — sensor não encontrado.
+
+### Excluir alerta do sensor
+
+Método e rota: `DELETE /sensor/{sensor_id}/alert/{alert_id}`
+Parâmetros de URL: `sensor_id` e `alert_id` (inteiros).
+
+Respostas:
+
+- `200 OK` — alerta deletado.
+  ```json
+  { "message": "Alerta deletado com sucesso." }
+  ```
+- `404 Not Found` — sensor ou alerta não encontrado.
 
 ### Excluir sensor
 
@@ -331,7 +402,7 @@ Respostas:
   ```
 - `401 Unauthorized` — token inválido.
 
-### Buscar conta do Telegram
+### Listar contas do Telegram
 
 Método e rota: `GET /telegram/`
 Parâmetros de URL: nenhum.
@@ -339,7 +410,7 @@ Cabeçalho: `Authorization: Bearer <token>`.
 
 Respostas:
 
-- `200 OK` — conta do Telegram vinculada.
+- `200 OK` — lista paginada de contas do Telegram vinculadas.
   ```json
   {
     "id": 1,
@@ -350,6 +421,26 @@ Respostas:
   ```
 - `401 Unauthorized` — token inválido.
 - `404 Not Found` — conta do Telegram não vinculada.
+
+### Buscar conta específica do Telegram
+
+Método e rota: `GET /telegram/{telegram_account_id}`
+Parâmetros de URL: `telegram_account_id` (inteiro).
+Cabeçalho: `Authorization: Bearer <token>`.
+
+Respostas:
+
+- `200 OK` — conta do Telegram encontrada.
+  ```json
+  {
+    "id": 1,
+    "user_id": 1,
+    "username": "maria_silva",
+    "chat_id": 123456789
+  }
+  ```
+- `403 Forbidden` — a conta pertence a outro usuário.
+- `404 Not Found` — conta do Telegram não encontrada.
 
 ### Desvincular conta do Telegram
 
@@ -365,3 +456,39 @@ Respostas:
   ```
 - `401 Unauthorized` — token inválido.
 - `404 Not Found` — conta do Telegram não vinculada.
+
+### Atualizar chat do usuário
+
+Método e rota: `PUT /chat/chat_id`
+Cabeçalho: `Authorization: Bearer <token>`.
+
+Corpo da requisição:
+```json
+{
+  "chat_id": "123456789"
+}
+```
+
+Respostas:
+
+- `200 OK` — chat do usuário atualizado.
+- `401 Unauthorized` — acesso inválido.
+- `422 Unprocessable Entity` — corpo inválido.
+
+### Buscar chat_ids
+
+Método e rota: `GET /chat/chats_id`
+Cabeçalho: `Authorization: Bearer <token>`.
+
+Respostas:
+
+- `200 OK` — lista de chat_ids disponíveis para o usuário.
+  ```json
+  [
+    {
+      "user_id": 1,
+      "chat_id": 123456789
+    }
+  ]
+  ```
+- `401 Unauthorized` — acesso inválido.
