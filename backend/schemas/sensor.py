@@ -5,6 +5,8 @@ from schemas.telegram_account import TelegramAccountResponse
 class SensorPayload(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     device_id: UUID
+    mqtt_username: str = Field(min_length=1, max_length=100)
+    mqtt_enabled: bool = True
 
     @field_validator("name")
     @classmethod
@@ -13,6 +15,14 @@ class SensorPayload(BaseModel):
         if not name:
             raise ValueError("O nome não pode ser vazio.")
         return name
+
+    @field_validator("mqtt_username")
+    @classmethod
+    def validate_mqtt_username(cls, value: str) -> str:
+        username = value.strip()
+        if not username:
+            raise ValueError("mqtt_username cannot be empty.")
+        return username
 
     @field_validator("device_id")
     @classmethod
@@ -27,6 +37,8 @@ class SensorResponse(BaseModel):
     id: int
     name: str
     device_id: UUID
+    mqtt_username: str
+    mqtt_enabled: bool
     telegram_accounts: list[TelegramAccountResponse] | None
 
 class SensorListResponse(BaseModel):

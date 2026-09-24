@@ -38,17 +38,19 @@ class Sensor(Base):
     device_id = Column("device_id", Uuid, nullable=False, default=uuid.uuid4)
     name = Column("name", String, nullable=False)
     mqtt_username = Column("mqtt_username", String, unique=True, nullable=False)
-    mqtt_enabled = Column("mqtt_column", Boolean, default=True, nullable=False)
+    mqtt_enabled = Column("mqtt_enabled", Boolean, default=True, nullable=False)
     last_seen_at = Column("last_seen_at", DateTime(timezone=True), nullable=True)
     last_state = Column("last_state", String, nullable=True)
     telegram_accounts = relationship("TelegramAccount", secondary=sensor_telegram_accounts, back_populates="sensors")
 
-    def __init__(self, name, device_id = None):
+    def __init__(self, name, device_id = None, mqtt_username = None, mqtt_enabled = True):
         self.name = name
         self.device_id = device_id
+        self.mqtt_username = mqtt_username
+        self.mqtt_enabled = mqtt_enabled
 
     def keys(self):
-        return ["id", "device_id", "name", "telegram_accounts"]
+        return ["id", "device_id", "name", "mqtt_username", "mqtt_enabled", "telegram_accounts"]
 
     def __getitem__(self, key):
         return getattr(self, key)
@@ -65,6 +67,17 @@ class SensorAlert(Base):
     alert_type = Column("alert_type", String, nullable=False)
     value = Column("value", Float, nullable=False)
     threshold = Column("threshold", Float, nullable=False)
+
+    def __init__(self, user_id, event_id, sensor_id, sequence, occurred_at, received_at, alert_type, value, threshold):
+            self.user_id = user_id
+            self.event_id = event_id
+            self.sensor_id = sensor_id
+            self.sequence = sequence 
+            self.occurred_at = occurred_at
+            self.received_at = received_at
+            self.alert_type = alert_type
+            self.value = value
+            self.threshold = threshold
 
 
 class TelegramAccount(Base):
