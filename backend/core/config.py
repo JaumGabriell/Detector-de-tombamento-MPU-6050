@@ -12,8 +12,6 @@ class Settings(BaseSettings):
     MQTT_USERNAME: str
     MQTT_PASSWORD: str
 
-    MQTT_CA_CERT: str
-
     MQTT_CLIENT_ID: str = "sensor-backend-ingestor"
 
     MQTT_KEEPALIVE: int = 60

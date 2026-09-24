@@ -10,12 +10,13 @@ class SensorAlertResponse(BaseModel):
     id: int
     event_id: UUID
     sensor_id: int
-    sequence: int
     occurred_at: datetime
     received_at: datetime
     alert_type: str
-    value: float
-    threshold: float
+    x: float
+    y: float
+    z: float
+    inclination: float
 
 
 class SensorAlertListResponse(BaseModel):

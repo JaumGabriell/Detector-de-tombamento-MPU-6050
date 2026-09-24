@@ -2,7 +2,7 @@ import asyncio
 import logging
 
 from core.config import get_settings
-from .mqtt.consumer import MQTTConsumer
+from mqtt.consumer import MQTTConsumer
 
 logging.basicConfig(
     level=logging.INFO,

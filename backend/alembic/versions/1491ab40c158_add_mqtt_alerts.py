@@ -25,12 +25,13 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('event_id', sa.String(), nullable=False),
     sa.Column('sensor_id', sa.Integer(), nullable=False),
-    sa.Column('sequence', sa.BigInteger(), nullable=False),
     sa.Column('occurred_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('received_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('alert_type', sa.String(), nullable=False),
-    sa.Column('value', sa.Float(), nullable=False),
-    sa.Column('threshold', sa.Float(), nullable=False),
+    sa.Column('x', sa.Float(), nullable=False),
+    sa.Column('y', sa.Float(), nullable=False),
+    sa.Column('z', sa.Float(), nullable=False),
+    sa.Column('inclination', sa.Float(), nullable=False),
     sa.ForeignKeyConstraint(['sensor_id'], ['sensors.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('event_id')
@@ -39,7 +40,7 @@ def upgrade() -> None:
     # recreates the table and applies the constraint during the copy.
     with op.batch_alter_table('sensors') as batch_op:
         batch_op.add_column(sa.Column('mqtt_username', sa.String(), nullable=False))
-        batch_op.add_column(sa.Column('mqtt_column', sa.Boolean(), nullable=False))
+        batch_op.add_column(sa.Column('mqtt_enabled', sa.Boolean(), nullable=False))
         batch_op.add_column(sa.Column('last_seen_at', sa.DateTime(timezone=True), nullable=True))
         batch_op.add_column(sa.Column('last_state', sa.String(), nullable=True))
         batch_op.create_unique_constraint('uq_sensors_mqtt_username', ['mqtt_username'])

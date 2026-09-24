@@ -30,12 +30,13 @@ async def process_alert(session_factory: async_sessionmaker[AsyncSession], senso
             .values(
                 event_id=str(message.event_id),
                 sensor_id=sensor_id,
-                sequence=message.sequence,
                 occurred_at=message.occurred_at,
                 received_at=now,
                 alert_type=message.type,
-                value=message.value,
-                threshold=message.threshold,
+                x=message.x,
+                y=message.y,
+                z=message.z,
+                inclination=message.inclination,
             )
             .on_conflict_do_nothing(
                 index_elements=["event_id"]

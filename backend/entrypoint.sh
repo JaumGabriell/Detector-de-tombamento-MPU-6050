@@ -4,5 +4,5 @@ set -e
 echo "Running database migrations..."
 alembic upgrade head
 
-echo "Starting application..."
-exec python /app/main.py
+echo "Starting process: $*"
+exec "$@"

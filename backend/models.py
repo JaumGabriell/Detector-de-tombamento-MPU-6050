@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Boolean, Column, BigInteger, Integer, Float, String, Uuid, Table, DateTime, ForeignKey, create_engine
+from sqlalchemy import Boolean, Column, Integer, Float, String, Uuid, Table, DateTime, ForeignKey, create_engine
 from sqlalchemy.orm import declarative_base, relationship
 
 db = create_engine("sqlite:///database/database.db")
@@ -50,7 +50,16 @@ class Sensor(Base):
         self.mqtt_enabled = mqtt_enabled
 
     def keys(self):
-        return ["id", "device_id", "name", "mqtt_username", "mqtt_enabled", "telegram_accounts"]
+        return [
+            "id",
+            "device_id",
+            "name",
+            "mqtt_username",
+            "mqtt_enabled",
+            "last_seen_at",
+            "last_state",
+            "telegram_accounts",
+        ]
 
     def __getitem__(self, key):
         return getattr(self, key)
@@ -61,23 +70,24 @@ class SensorAlert(Base):
     id = Column("id", Integer, primary_key=True, autoincrement=True)
     event_id = Column("event_id", String, unique=True, nullable=False)
     sensor_id = Column("sensor_id", Integer, ForeignKey("sensors.id"), nullable=False)
-    sequence = Column("sequence", BigInteger, nullable=False)
     occurred_at = Column("occurred_at", DateTime(timezone=True), nullable=False)
     received_at = Column("received_at", DateTime(timezone=True), nullable=False)
     alert_type = Column("alert_type", String, nullable=False)
-    value = Column("value", Float, nullable=False)
-    threshold = Column("threshold", Float, nullable=False)
+    x = Column("x", Float, nullable=False)
+    y = Column("y", Float, nullable=False)
+    z = Column("z", Float, nullable=False)
+    inclination = Column("inclination", Float, nullable=False)
 
-    def __init__(self, user_id, event_id, sensor_id, sequence, occurred_at, received_at, alert_type, value, threshold):
-            self.user_id = user_id
+    def __init__(self, event_id, sensor_id, occurred_at, received_at, alert_type, x, y, z, inclination):
             self.event_id = event_id
             self.sensor_id = sensor_id
-            self.sequence = sequence 
             self.occurred_at = occurred_at
             self.received_at = received_at
             self.alert_type = alert_type
-            self.value = value
-            self.threshold = threshold
+            self.x = x
+            self.y = y
+            self.z = z
+            self.inclination = inclination
 
 
 class TelegramAccount(Base):

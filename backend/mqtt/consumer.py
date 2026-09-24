@@ -1,7 +1,9 @@
 import asyncio
 import logging
+import time
 
 import paho.mqtt.client as mqtt
+from sqlalchemy import select
 from paho.mqtt.enums import CallbackAPIVersion
 from paho.mqtt.properties import Properties
 from paho.mqtt.packettypes import PacketTypes
@@ -12,6 +14,9 @@ from mqtt.schemas import AlertMessage, StateMessage
 from mqtt.topics import parse_topic
 from services.alerts import process_alert
 from models import Sensor
+from core.telegram import send_message
+from sqlalchemy.orm import selectinload
+from models import TelegramAccount, Sensor
 
 
 logger = logging.getLogger(__name__)
@@ -29,6 +34,7 @@ class MQTTConsumer:
             callback_api_version=CallbackAPIVersion.VERSION2,
             client_id=settings.MQTT_CLIENT_ID,
             protocol=mqtt.MQTTv5,
+            transport="websockets",
             manual_ack=True,
         )
 
@@ -37,9 +43,7 @@ class MQTTConsumer:
             password=settings.MQTT_PASSWORD,
         )
 
-        self.client.tls_set(
-            ca_certs=settings.MQTT_CA_CERT,
-        )
+        #self.client.tls_set()
 
         self.client.on_connect = self._on_connect
         self.client.on_disconnect = self._on_disconnect
@@ -114,7 +118,33 @@ class MQTTConsumer:
             )
 
             if created:
-                # [TODO] Linkar com envio de mensagens no telegram
+                chats = []
+                async with SessionLocal() as session:
+                    result = await session.execute(
+                        select(Sensor)
+                        .options(selectinload(Sensor.telegram_accounts))
+                        .where(Sensor.id == parsed.sensor_id)
+                    )
+                    sensor = result.scalar_one_or_none()
+
+                    if sensor is None:
+                        raise ValueError(
+                            f"Unknown sensor: "
+                            f"{parsed.sensor_id}"
+                        )
+
+                    telegram_accounts = [account for account in sensor.telegram_accounts if account.chat_id is not None]
+                    chats.extend(telegram_accounts)
+
+                message = "🚨 ALERTA DE EMERGÊNCIA! 🚨\n\n"
+                message += f"⚠️ TOMBAMENTO DETECTADO NO {sensor.name}!\n\n"
+                message += f"🕒 Horário: {data.occurred_at}\n"
+                message += "📍 Localização: Raspberry Pi - TumbleGuard\n\n"
+                message += f"Leituras: X= {data.x}, Y= {data.y}, Z= {data.z}, inclination: {data.inclination}\n\n"
+                message += "Por favor, verifique imediatamente!"
+
+                for chat in chats:
+                    await send_message(chat.chat_id, message)
 
                 logger.info(
                     "New alert from sensor=%s",

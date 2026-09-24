@@ -48,6 +48,8 @@ async def get_sensor(sensor_id: int, session: Session = Depends(get_session), us
         device_id=sensor.device_id,
         mqtt_username=sensor.mqtt_username,
         mqtt_enabled=sensor.mqtt_enabled,
+        last_seen_at=sensor.last_seen_at,
+        last_state=sensor.last_state,
         telegram_accounts=[account for account in sensor.telegram_accounts if account.chat_id is not None]
     )
 
@@ -108,6 +110,8 @@ def get_sensors(page: int = Query(1, ge=1), session: Session = Depends(get_sessi
             device_id=sensor.device_id,
             mqtt_username=sensor.mqtt_username,
             mqtt_enabled=sensor.mqtt_enabled,
+            last_seen_at=sensor.last_seen_at,
+            last_state=sensor.last_state,
             telegram_accounts=[account for account in sensor.telegram_accounts if account.chat_id is not None]
         )
         for sensor in sensors
@@ -182,6 +186,8 @@ async def link_to_telegram_account(sensor_id: int, telegram_account_id: int, ses
         device_id=sensor.device_id,
         mqtt_username=sensor.mqtt_username,
         mqtt_enabled=sensor.mqtt_enabled,
+        last_seen_at=sensor.last_seen_at,
+        last_state=sensor.last_state,
         telegram_accounts=[account for account in sensor.telegram_accounts if account.chat_id is not None]
     )
     

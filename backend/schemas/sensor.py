@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from schemas.telegram_account import TelegramAccountResponse
@@ -39,6 +40,8 @@ class SensorResponse(BaseModel):
     device_id: UUID
     mqtt_username: str
     mqtt_enabled: bool
+    last_seen_at: datetime | None
+    last_state: str | None
     telegram_accounts: list[TelegramAccountResponse] | None
 
 class SensorListResponse(BaseModel):

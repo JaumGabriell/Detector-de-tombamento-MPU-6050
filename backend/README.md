@@ -44,6 +44,9 @@ Porem como o telegram exige que o **webhook** seja `https` é preciso fornecer u
 > [!TIP]
 > Para facilitar na hora te testar pode ser util o uso do `Cloudflare Tunnel` ou `Ngrok` que fornecem tuneis criptografados com certificado valido.
 
+## MQTT
+Especificações nos arquivos `mqtt_sensor_state_spec.md`, `mqtt_sensor_alerts_spec.md`.
+
 ## Rotas
 
 ### Criar usuário
@@ -319,12 +322,13 @@ Respostas:
     "id": 1,
     "event_id": "550e8400-e29b-41d4-a716-446655440000",
     "sensor_id": 1,
-    "sequence": 42,
     "occurred_at": "2026-09-24T15:30:45Z",
     "received_at": "2026-09-24T15:30:46Z",
     "alert_type": "tilt",
-    "value": 38.7,
-    "threshold": 30.0
+    "x": 0.42,
+    "y": -0.18,
+    "z": 9.76,
+    "inclination": 38.7
   }
   ```
 - `404 Not Found` — sensor ou alerta não encontrado.
