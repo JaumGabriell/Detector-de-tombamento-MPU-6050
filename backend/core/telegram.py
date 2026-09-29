@@ -1,10 +1,14 @@
 import os
 import httpx
+from dotenv import load_dotenv
 from core.security import create_telegram_token, verify_telegram_token
 from dependencies import Session
 from sqlalchemy import select
 from fastapi import HTTPException
 from models import TelegramAccount
+
+# Carrega .env antes de ler as variáveis
+load_dotenv()
 
 BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME")
 API_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -41,6 +45,20 @@ async def send_message(chat_id: str, text: str):
                 "text": text,
             }
         )
+
+
+async def send_location(chat_id: str, latitude: float, longitude: float):
+    """Envia localização via Telegram"""
+    async with httpx.AsyncClient() as client:
+        await client.post(
+            f"https://api.telegram.org/bot{API_TOKEN}/sendLocation",
+            json={
+                "chat_id": chat_id,
+                "latitude": latitude,
+                "longitude": longitude,
+            }
+        )
+
 
 async def _connect_account(message: dict, session: Session):
     """Using the recived message verifies the authenticity and associente the telegram account with the user"""

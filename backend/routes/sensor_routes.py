@@ -7,8 +7,34 @@ from dependencies import get_authenticated_user, get_session
 from models import Sensor, SensorAlert, TelegramAccount, User
 from schemas.sensor import SensorPayload, SensorResponse, SensorListResponse
 from schemas.sensor_alert import SensorAlertResponse, SensorAlertListResponse
+from mqtt.consumer import telemetry_cache
 
 sensor_router = APIRouter(prefix="/sensor", tags=["Sensors"])
+
+
+@sensor_router.get("/{sensor_id}/telemetry", status_code=status.HTTP_200_OK)
+def get_sensor_telemetry(sensor_id: int, session: Session = Depends(get_session), user: User = Depends(get_authenticated_user)):
+    """Retorna última telemetria do sensor (em tempo real do cache)"""
+    sensor = session.query(Sensor).filter(Sensor.id == sensor_id).first()
+    
+    if sensor is None:
+        raise HTTPException(status_code=404, detail="Sensor não encontrado")
+    
+    telemetry = telemetry_cache.get(sensor_id)
+    
+    if telemetry is None:
+        return {
+            "sensor_id": sensor_id,
+            "connected": False,
+            "data": None
+        }
+    
+    return {
+        "sensor_id": sensor_id,
+        "connected": True,
+        "data": telemetry
+    }
+
 
 @sensor_router.post("/", response_model=SensorResponse, status_code=status.HTTP_201_CREATED)
 async def create_sensor(payload: SensorPayload, session: Session = Depends(get_session), user: User = Depends(get_authenticated_user)):

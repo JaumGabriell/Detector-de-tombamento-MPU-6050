@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -12,6 +13,8 @@ class AlertMessage(BaseModel):
     y: float
     z: float
     inclination: float
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
 
 class StateMessage(BaseModel):

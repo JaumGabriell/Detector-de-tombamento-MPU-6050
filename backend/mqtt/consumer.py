@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import time
+from typing import Dict, Any
 
 import paho.mqtt.client as mqtt
 from sqlalchemy import select
@@ -14,12 +15,15 @@ from mqtt.schemas import AlertMessage, StateMessage
 from mqtt.topics import parse_topic
 from services.alerts import process_alert
 from models import Sensor
-from core.telegram import send_message
+from core.telegram import send_message, send_location
 from sqlalchemy.orm import selectinload
 from models import TelegramAccount, Sensor
 
 
 logger = logging.getLogger(__name__)
+
+# Cache de última telemetria por sensor (em memória)
+telemetry_cache: Dict[int, Dict[str, Any]] = {}
 
 
 class MQTTConsumer:
@@ -43,7 +47,7 @@ class MQTTConsumer:
             password=settings.MQTT_PASSWORD,
         )
 
-        #self.client.tls_set()
+        self.client.tls_set()
 
         self.client.on_connect = self._on_connect
         self.client.on_disconnect = self._on_disconnect
@@ -136,15 +140,27 @@ class MQTTConsumer:
                     telegram_accounts = [account for account in sensor.telegram_accounts if account.chat_id is not None]
                     chats.extend(telegram_accounts)
 
+                # Formata horário
+                horario = data.occurred_at.strftime("%d/%m/%Y %H:%M:%S")
+                
+                # Mensagem de alerta (sem coordenadas)
                 message = "🚨 ALERTA DE EMERGÊNCIA! 🚨\n\n"
-                message += f"⚠️ TOMBAMENTO DETECTADO NO {sensor.name}!\n\n"
-                message += f"🕒 Horário: {data.occurred_at}\n"
-                message += "📍 Localização: Raspberry Pi - TumbleGuard\n\n"
-                message += f"Leituras: X= {data.x}, Y= {data.y}, Z= {data.z}, inclination: {data.inclination}\n\n"
+                message += f"⚠️ TOMBAMENTO DETECTADO!\n"
+                message += f"📦 Sensor: {sensor.name}\n\n"
+                message += f"🕒 Horário: {horario}\n"
+                message += f"📐 Inclinação: {data.inclination:.1f}°\n\n"
                 message += "Por favor, verifique imediatamente!"
 
                 for chat in chats:
+                    # Envia mensagem de texto
                     await send_message(chat.chat_id, message)
+                    
+                    # Envia localização se disponível
+                    logger.info(f"GPS recebido: lat={data.latitude}, lon={data.longitude}")
+                    if data.latitude is not None and data.longitude is not None:
+                        await send_location(chat.chat_id, data.latitude, data.longitude)
+                    else:
+                        logger.warning("Localização GPS não disponível no alerta")
 
                 logger.info(
                     "New alert from sensor=%s",
@@ -175,6 +191,21 @@ class MQTTConsumer:
 
                 await session.commit()
 
+            return
+
+        if parsed.kind == "telemetry":
+            # Guarda última telemetria no cache em memória
+            import json
+            data = json.loads(payload)
+            telemetry_cache[parsed.sensor_id] = {
+                "x": data.get("x"),
+                "y": data.get("y"),
+                "z": data.get("z"),
+                "inclination": data.get("inclination"),
+                "latitude": data.get("latitude"),
+                "longitude": data.get("longitude"),
+                "occurred_at": data.get("occurred_at"),
+            }
             return
 
         raise ValueError(

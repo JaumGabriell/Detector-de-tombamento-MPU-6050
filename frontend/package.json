@@ -12,9 +12,11 @@
     "vite": "^8.2.2"
   },
   "dependencies": {
+    "leaflet": "^1.9.4",
     "paho-mqtt": "^1.1.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-leaflet": "^4.2.1",
     "react-router-dom": "^7.18.3"
   }
 }

@@ -1,67 +1,117 @@
-import { useEffect, useState } from 'react'
-import { Client } from 'paho-mqtt'
-import { MQTT_CONFIG } from '../config/mqtt'
+import { useEffect, useState, useCallback } from "react";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const SENSOR_ID = 1;
+const POLL_INTERVAL = 500; // ms
 
 const initialTelemetry = {
-  x: '0.00',
-  y: '0.00',
-  z: '0.00',
-  angle: '0.0°',
+  x: "0.00",
+  y: "0.00",
+  z: "0.00",
+  angle: "0.0°",
   fallen: false,
-  lastUpdate: 'Sem conexão',
-}
+  lastUpdate: "Sem conexão",
+  latitude: null,
+  longitude: null,
+};
 
 export function useMqttTelemetry() {
-  const [telemetry, setTelemetry] = useState(initialTelemetry)
-  const [connection, setConnection] = useState('Conectando ao broker MQTT...')
+  const [telemetry, setTelemetry] = useState(initialTelemetry);
+  const [connection, setConnection] = useState("Conectando...");
+  const [alerts, setAlerts] = useState([]);
+
+  const getToken = () => {
+    try {
+      return JSON.parse(localStorage.getItem("sentinela-auth") || "null")
+        ?.access_token;
+    } catch {
+      return null;
+    }
+  };
+
+  const fetchTelemetry = useCallback(async () => {
+    const token = getToken();
+    if (!token) {
+      setConnection("Não autenticado");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/sensor/${SENSOR_ID}/telemetry`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error("Erro ao buscar telemetria");
+
+      const json = await res.json();
+
+      if (json.connected && json.data) {
+        const data = json.data;
+        setTelemetry({
+          x: data.x?.toFixed(2) || "0.00",
+          y: data.y?.toFixed(2) || "0.00",
+          z: data.z?.toFixed(2) || "0.00",
+          angle: `${Number(data.inclination || 0).toFixed(1)}°`,
+          fallen: (data.inclination || 0) > 45,
+          lastUpdate: data.occurred_at
+            ? new Date(data.occurred_at).toLocaleTimeString("pt-BR")
+            : "Agora",
+          latitude: data.latitude,
+          longitude: data.longitude,
+        });
+        setConnection("Conectado");
+      } else {
+        setConnection("Sensor offline");
+        setTelemetry(initialTelemetry);
+      }
+    } catch (e) {
+      console.error("Erro ao buscar telemetria:", e);
+      setConnection("Erro de conexão");
+    }
+  }, []);
+
+  const fetchAlerts = useCallback(async () => {
+    const token = getToken();
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${API_URL}/sensor/${SENSOR_ID}/alert?page=1`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error("Erro ao buscar alertas");
+
+      const json = await res.json();
+
+      setAlerts(
+        json.items?.map((alert) => ({
+          id: alert.event_id,
+          type: alert.alert_type,
+          inclination: alert.inclination,
+          time: new Date(alert.occurred_at).toLocaleTimeString("pt-BR"),
+        })) || [],
+      );
+    } catch (e) {
+      console.error("Erro ao buscar alertas:", e);
+    }
+  }, []);
 
   useEffect(() => {
-    const client = new Client(
-      MQTT_CONFIG.broker,
-      MQTT_CONFIG.port,
-      '/mqtt',
-      `dashboard_${Math.random().toString(16).slice(2, 10)}`,
-    )
+    // Busca inicial
+    fetchTelemetry();
+    fetchAlerts();
 
-    client.onConnectionLost = () => {
-      setConnection('Desconectado')
-      setTelemetry(initialTelemetry)
-    }
-    client.onMessageArrived = (message) => {
-      try {
-        const data = JSON.parse(message.payloadString)
-        if (!data.acelerometro || !data.timestamp) return
+    // Polling de telemetria
+    const telemetryInterval = setInterval(fetchTelemetry, POLL_INTERVAL);
 
-        setTelemetry({
-          x: data.acelerometro.x,
-          y: data.acelerometro.y,
-          z: data.acelerometro.z,
-          angle: `${Number(data.inclinacao).toFixed(1)}°`,
-          fallen: Boolean(data.alerta?.includes('TOMBAMENTO')),
-          lastUpdate: new Date(data.timestamp * 1000).toLocaleTimeString('pt-BR'),
-        })
-      } catch {
-        // Mensagens MQTT inválidas não devem interromper o monitoramento.
-      }
-    }
-
-    client.connect({
-      timeout: 10,
-      useSSL: false,
-      onSuccess: () => {
-        setConnection('Conectado')
-        client.subscribe(MQTT_CONFIG.topic)
-      },
-      onFailure: () => {
-        setConnection('Sem conexão')
-        setTelemetry(initialTelemetry)
-      },
-    })
+    // Atualiza alertas a cada 5 segundos
+    const alertsInterval = setInterval(fetchAlerts, 5000);
 
     return () => {
-      if (client.isConnected()) client.disconnect()
-    }
-  }, [])
+      clearInterval(telemetryInterval);
+      clearInterval(alertsInterval);
+    };
+  }, [fetchTelemetry, fetchAlerts]);
 
-  return { telemetry, connection }
+  return { telemetry, connection, alerts };
 }

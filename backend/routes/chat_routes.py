@@ -3,8 +3,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from dependencies import get_session, get_authenticated_user
-from models import User
-from schemas.auth import ChatIdUpdate, UserResponse
+from models import User, TelegramAccount, Sensor, sensor_telegram_accounts
+from schemas.auth import ChatIdUpdate
+from schemas.user import UserResponse
 
 
 chat_router = APIRouter(
@@ -19,7 +20,36 @@ def update_chat_id(
     user: User = Depends(get_authenticated_user),
     session: Session = Depends(get_session)
 ):
+    # Salva no user (compatibilidade)
     user.chat_id = payload.chat_id
+    
+    # Verifica se já existe telegram_account com esse chat_id para o usuário
+    existing = session.scalar(
+        select(TelegramAccount).where(
+            TelegramAccount.user_id == user.id,
+            TelegramAccount.chat_id == payload.chat_id
+        )
+    )
+    
+    if not existing:
+        # Cria telegram_account automaticamente
+        telegram_account = TelegramAccount(user.id)
+        telegram_account.chat_id = payload.chat_id
+        session.add(telegram_account)
+        session.flush()
+        
+        # Vincula a todos os sensores existentes automaticamente
+        sensors = session.scalars(select(Sensor)).all()
+        for sensor in sensors:
+            # Verifica se já não está vinculado
+            already_linked = session.execute(
+                select(sensor_telegram_accounts).where(
+                    sensor_telegram_accounts.c.sensor_id == sensor.id,
+                    sensor_telegram_accounts.c.telegram_account_id == telegram_account.id
+                )
+            ).first()
+            if not already_linked:
+                sensor.telegram_accounts.append(telegram_account)
 
     session.commit()
     session.refresh(user)
