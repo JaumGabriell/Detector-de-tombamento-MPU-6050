@@ -8,7 +8,7 @@
 
 ## 📋 Descrição
 
-O **Detector de Tombamento com MPU-6050** é um sistema embarcado de segurança que monitora continuamente a inclinação de objetos, equipamentos ou estruturas através de um sensor acelerômetro/giroscópio MPU-6050. Quando um tombamento é detectado (inclinação superior a 45°), o sistema envia automaticamente um alerta de emergência via Telegram.
+O **Detector de Tombamento com MPU-6050** é um sistema embarcado de segurança que monitora continuamente a inclinação de objetos, equipamentos ou estruturas através de um sensor acelerômetro/giroscópio MPU-6050. O sistema também conta com um módulo GPS GY-GPS6MV2 para rastreamento de localização. Quando um tombamento é detectado (inclinação superior a 45°), o sistema envia automaticamente um alerta de emergência via Telegram com a localização do dispositivo.
 
 **Aplicações:**
 
@@ -92,39 +92,49 @@ pip install requests smbus
 
 1. **Habilite o I2C na Raspberry Pi:**
 
-   ```bash
-   sudo raspi-config
-   # Interface Options > I2C > Enable
-   ```
+```bash
+sudo raspi-config
+# Interface Options > I2C > Enable
+```
 
-2. **Clone o repositório:**
+2. **Habilite a UART na Raspberry Pi (para o GPS):**
 
-   ```bash
-   git clone https://github.com/seu-usuario/Detector-de-tombamento-MPU-6050.git
-   cd Detector-de-tombamento-MPU-6050
-   ```
+```bash
+sudo raspi-config
+# Interface Options > Serial Port
+# "Would you like a login shell to be accessible over serial?" -> No
+# "Would you like the serial port hardware to be enabled?" -> Yes
+```
 
-3. **Instale as dependências:**
+3. **Clone o repositório:**
 
-   ```bash
-   pip install requests smbus
-   ```
+```bash
+git clone https://github.com/seu-usuario/Detector-de-tombamento-MPU-6050.git
+cd Detector-de-tombamento-MPU-6050
+```
 
-4. **Configure o Telegram:**
+4. **Instale as dependências:**
 
-   Crie um arquivo `config.json` na raiz do projeto:
+```bash
+pip install requests smbus
+```
 
-   ```json
-   {
-     "token": "SEU_TOKEN_DO_BOT",
-     "chat_id": "SEU_CHAT_ID"
-   }
-   ```
+5. **Configure o Telegram:**
 
-5. **Execute o sistema:**
-   ```bash
-   python3 main.py
-   ```
+Crie um arquivo `config.json` na raiz do projeto:
+
+```json
+{
+  "token": "SEU_TOKEN_DO_BOT",
+  "chat_id": "SEU_CHAT_ID"
+}
+```
+
+6. **Execute o sistema:**
+
+```bash
+python3 main.py
+```
 
 ---
 
