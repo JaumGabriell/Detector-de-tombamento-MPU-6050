@@ -1,4 +1,4 @@
-# TumbleGuard - Detector de Tombamento com MPU-6050
+# Detector de Tombamento com MPU-6050
 
 > � Sistema de detecção de tombamento utilizando sensor MPU-6050 e Raspberry Pi com notificações via Telegram.
 
@@ -8,7 +8,7 @@
 
 ## 📋 Descrição
 
-O **TumbleGuard** é um sistema embarcado de segurança que monitora continuamente a inclinação de objetos, equipamentos ou estruturas através de um sensor acelerômetro/giroscópio MPU-6050. Quando um tombamento é detectado (inclinação superior a 45°), o sistema envia automaticamente um alerta de emergência via Telegram.
+O **Detector de Tombamento com MPU-6050** é um sistema embarcado de segurança que monitora continuamente a inclinação de objetos, equipamentos ou estruturas através de um sensor acelerômetro/giroscópio MPU-6050. Quando um tombamento é detectado (inclinação superior a 45°), o sistema envia automaticamente um alerta de emergência via Telegram.
 
 **Aplicações:**
 
@@ -25,6 +25,7 @@ O **TumbleGuard** é um sistema embarcado de segurança que monitora continuamen
 - **Hardware:**
   - Raspberry Pi
   - Sensor MPU-6050 (Acelerômetro e Giroscópio)
+  - Módulo GPS GY-GPS6MV2 (baseado no chip u-blox NEO-6M)
 
 - **Software:**
   - Python 3
@@ -73,6 +74,17 @@ pip install requests smbus
 | GND      | GND          |
 | SDA      | GPIO 2 (SDA) |
 | SCL      | GPIO 3 (SCL) |
+
+---
+
+## 🔌 Conexão do GPS GY-GPS6MV2 com Raspberry Pi
+
+| GY-GPS6MV2 | Raspberry Pi  |
+| ---------- | ------------- |
+| VCC        | 3.3V ou 5V    |
+| GND        | GND           |
+| TX         | GPIO 15 (RXD) |
+| RX         | GPIO 14 (TXD) |
 
 ---
 
@@ -128,15 +140,15 @@ pip install requests smbus
 
 ---
 
-## 📊 Exemplo de Saída
+## Exemplo de Saída
 
 ```
 ============================================================
-� TumbleGuard - Sistema de Detecção de Tombamento
+ Detector de Tombamento - Sistema de Monitoramento
 ============================================================
 
-🌐 IP da Raspberry Pi: 192.168.1.100
-📡 Servidor Flask: http://192.168.1.100:5000
+ IP da Raspberry Pi: 192.168.1.100
+ Servidor Flask: http://192.168.1.100:5000
 
 Pressione Ctrl+C para parar todos os serviços
 ============================================================
