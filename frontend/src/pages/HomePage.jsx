@@ -41,6 +41,9 @@ export function HomePage() {
           <NavLink to="/gps" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
             Visualizar GPS
           </NavLink>
+          <NavLink to="/admin" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
+            Administração
+          </NavLink>
         </nav>
         <div className="sidebar-footer">
           <span className="online-dot" /> Sistema operacional
