@@ -29,6 +29,11 @@ def get_authenticated_user(token: str = Depends(oauth2_schema), session: Session
 
     return user
 
+def get_admin_user(user: User = Depends(get_authenticated_user)):
+    if not user.admin:
+        raise HTTPException(status_code=403, detail="Acesso restrito a administradores")
+    return user
+
 def get_authenticated_refresh_user(token: str = Depends(oauth2_schema), session: Session = Depends(get_session)):
     try:
         decoded_token = verify_token(token, expected_type="refresh")

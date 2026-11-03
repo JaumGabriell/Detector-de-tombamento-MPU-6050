@@ -1,5 +1,8 @@
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+class UserAdminUpdate(BaseModel):
+    admin: bool
+
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

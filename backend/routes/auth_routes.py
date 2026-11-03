@@ -24,7 +24,7 @@ def create_user(payload: UserCreate, session: Session = Depends(get_session)):
             detail="Já existe um usuário com este e-mail.",
         )
 
-    new_user = User(payload.name, email, hash_password(payload.password))
+    new_user = User(payload.name, email, hash_password(payload.password), admin=payload.admin)
     try:
         session.add(new_user)
         session.commit()

@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Boolean, Column, Integer, Float, String, Uuid, Table, DateTime, ForeignKey, create_engine
+from sqlalchemy import Boolean, Column, Integer, Float, String, Uuid, Table, DateTime, ForeignKey, JSON, create_engine
 from sqlalchemy.orm import declarative_base, relationship
 
 db = create_engine("sqlite:///database/database.db")
@@ -42,6 +42,7 @@ class Sensor(Base):
     last_seen_at = Column("last_seen_at", DateTime(timezone=True), nullable=True)
     last_state = Column("last_state", String, nullable=True)
     telegram_accounts = relationship("TelegramAccount", secondary=sensor_telegram_accounts, back_populates="sensors")
+    telemetry = relationship("SensorTelemetry", cascade="all, delete-orphan", uselist=False)
 
     def __init__(self, name, device_id = None, mqtt_username = None, mqtt_enabled = True):
         self.name = name
@@ -63,6 +64,13 @@ class Sensor(Base):
 
     def __getitem__(self, key):
         return getattr(self, key)
+
+class SensorTelemetry(Base):
+    __tablename__ = "sensor_telemetry"
+
+    sensor_id = Column(Integer, ForeignKey("sensors.id"), primary_key=True)
+    data = Column(JSON, nullable=False)
+
 
 class SensorAlert(Base):
     __tablename__ = "sensor_alerts"

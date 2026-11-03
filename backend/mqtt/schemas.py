@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -19,5 +19,4 @@ class AlertMessage(BaseModel):
 
 class StateMessage(BaseModel):
     schema_version: int
-    state: str
-    occurred_at: datetime
+    state: Literal["online", "offline"]

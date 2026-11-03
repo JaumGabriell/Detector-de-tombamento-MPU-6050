@@ -1,26 +1,28 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
+from typing import Literal
+from uuid import UUID
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.exc import IntegrityError
 
 
-from dependencies import get_authenticated_user, get_session
-from models import Sensor, SensorAlert, TelegramAccount, User
+from dependencies import get_admin_user, get_authenticated_user, get_session
+from models import Sensor, SensorAlert, SensorTelemetry, TelegramAccount, User
 from schemas.sensor import SensorPayload, SensorResponse, SensorListResponse
 from schemas.sensor_alert import SensorAlertResponse, SensorAlertListResponse
-from mqtt.consumer import telemetry_cache
+from services.admin_queries import filter_sensors
 
 sensor_router = APIRouter(prefix="/sensor", tags=["Sensors"])
 
 
 @sensor_router.get("/{sensor_id}/telemetry", status_code=status.HTTP_200_OK)
 def get_sensor_telemetry(sensor_id: int, session: Session = Depends(get_session), user: User = Depends(get_authenticated_user)):
-    """Retorna última telemetria do sensor (em tempo real do cache)"""
+    """Retorna a última telemetria recebida do sensor."""
     sensor = session.query(Sensor).filter(Sensor.id == sensor_id).first()
     
     if sensor is None:
         raise HTTPException(status_code=404, detail="Sensor não encontrado")
     
-    telemetry = telemetry_cache.get(sensor_id)
+    telemetry = session.get(SensorTelemetry, sensor_id)
     
     if telemetry is None:
         return {
@@ -32,12 +34,12 @@ def get_sensor_telemetry(sensor_id: int, session: Session = Depends(get_session)
     return {
         "sensor_id": sensor_id,
         "connected": True,
-        "data": telemetry
+        "data": telemetry.data
     }
 
 
 @sensor_router.post("/", response_model=SensorResponse, status_code=status.HTTP_201_CREATED)
-async def create_sensor(payload: SensorPayload, session: Session = Depends(get_session), user: User = Depends(get_authenticated_user)):
+async def create_sensor(payload: SensorPayload, session: Session = Depends(get_session), user: User = Depends(get_admin_user)):
     new_sensor = Sensor(
         payload.name,
         payload.device_id,
@@ -120,12 +122,13 @@ def get_sensor_alerts(sensor_id: int, page: int = Query(1, ge=1), session: Sessi
     )
 
 @sensor_router.get("/", response_model=SensorListResponse, status_code=status.HTTP_200_OK)
-def get_sensors(page: int = Query(1, ge=1), session: Session = Depends(get_session), user: User = Depends(get_authenticated_user)):
+def get_sensors(page: int = Query(1, ge=1), name: str | None = None, device_id: UUID | None = None, last_state: Literal["online", "offline", "unknown"] | None = None, mqtt_enabled: bool | None = None, session: Session = Depends(get_session), user: User = Depends(get_authenticated_user)):
     PER_PAGE = 10
-    total = session.query(Sensor).count()
+    query = filter_sensors(session.query(Sensor), name, device_id, last_state, mqtt_enabled)
+    total = query.count()
     offset = (page - 1) * PER_PAGE
 
-    sensors = (session.query(Sensor).options(selectinload(Sensor.telegram_accounts)).order_by(Sensor.id).offset(offset).limit(PER_PAGE).all())
+    sensors = (query.options(selectinload(Sensor.telegram_accounts)).order_by(Sensor.id).offset(offset).limit(PER_PAGE).all())
 
     pages = (total + PER_PAGE - 1) // PER_PAGE
 
@@ -151,7 +154,7 @@ def get_sensors(page: int = Query(1, ge=1), session: Session = Depends(get_sessi
     )
 
 @sensor_router.put("/{sensor_id}", response_model=SensorResponse, status_code=status.HTTP_200_OK)
-async def update_sensor(sensor_id: int, payload: SensorPayload, session: Session = Depends(get_session), user: User = Depends(get_authenticated_user)):
+async def update_sensor(sensor_id: int, payload: SensorPayload, session: Session = Depends(get_session), user: User = Depends(get_admin_user)):
     sensor = session.query(Sensor).filter(Sensor.id == sensor_id).first()
 
     if sensor is None:
@@ -183,6 +186,9 @@ async def link_to_telegram_account(sensor_id: int, telegram_account_id: int, ses
 
     if telegram_account is None:
         raise HTTPException(status_code=404, detail="Conta do telegram não encontrada")
+
+    if not user.admin and telegram_account.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Você não pode vincular esta conta do telegram")
     existing_chat = session.query(TelegramAccount).join(TelegramAccount.sensors).filter(
         Sensor.id == sensor_id,
         TelegramAccount.chat_id == telegram_account.chat_id,
@@ -218,8 +224,21 @@ async def link_to_telegram_account(sensor_id: int, telegram_account_id: int, ses
     )
     
 
+@sensor_router.delete("/link/{sensor_id}/{telegram_account_id}", status_code=status.HTTP_200_OK)
+def unlink_telegram_account(sensor_id: int, telegram_account_id: int, session: Session = Depends(get_session), user: User = Depends(get_authenticated_user)):
+    sensor = session.query(Sensor).options(selectinload(Sensor.telegram_accounts)).filter(Sensor.id == sensor_id).first()
+    account = session.query(TelegramAccount).filter(TelegramAccount.id == telegram_account_id).first()
+    if sensor is None or account is None or account not in sensor.telegram_accounts:
+        raise HTTPException(status_code=404, detail="Vínculo não encontrado")
+    if not user.admin and account.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Você não pode desvincular esta conta do telegram")
+    sensor.telegram_accounts.remove(account)
+    session.commit()
+    return {"message": "Conta do telegram desvinculada do sensor."}
+
+
 @sensor_router.delete("/{sensor_id}", status_code=status.HTTP_200_OK)
-async def delete_sensor(sensor_id: int, session: Session = Depends(get_session), user: User = Depends(get_authenticated_user)):
+async def delete_sensor(sensor_id: int, session: Session = Depends(get_session), user: User = Depends(get_admin_user)):
     sensor = session.query(Sensor).filter(Sensor.id == sensor_id).first()
     
     if sensor is None:
@@ -231,7 +250,7 @@ async def delete_sensor(sensor_id: int, session: Session = Depends(get_session),
     return {"message": "Sensor deletado com sucesso."}
 
 @sensor_router.delete("/{sensor_id}/alert/{alert_id}", status_code=status.HTTP_200_OK)
-async def delete_sensor_alert(sensor_id: int, alert_id: int, session: Session = Depends(get_session), user: User = Depends(get_authenticated_user)):
+async def delete_sensor_alert(sensor_id: int, alert_id: int, session: Session = Depends(get_session), user: User = Depends(get_admin_user)):
     sensor = session.query(Sensor).filter(Sensor.id == sensor_id).first()
 
     if sensor is None:

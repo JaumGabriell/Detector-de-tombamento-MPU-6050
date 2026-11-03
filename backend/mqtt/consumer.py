@@ -1,10 +1,12 @@
 import asyncio
 import logging
 import time
+from datetime import datetime, timezone
 from typing import Dict, Any
 
 import paho.mqtt.client as mqtt
 from sqlalchemy import select
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from paho.mqtt.enums import CallbackAPIVersion
 from paho.mqtt.properties import Properties
 from paho.mqtt.packettypes import PacketTypes
@@ -14,17 +16,13 @@ from database.session import SessionLocal
 from mqtt.schemas import AlertMessage, StateMessage
 from mqtt.topics import parse_topic
 from services.alerts import process_alert
-from models import Sensor
+from models import Sensor, SensorTelemetry
 from core.telegram import send_message, send_location
 from sqlalchemy.orm import selectinload
 from models import TelegramAccount, Sensor
 
 
 logger = logging.getLogger(__name__)
-
-# Cache de última telemetria por sensor (em memória)
-telemetry_cache: Dict[int, Dict[str, Any]] = {}
-
 
 class MQTTConsumer:
 
@@ -187,17 +185,16 @@ class MQTTConsumer:
                     )
 
                 sensor.last_state = data.state
-                sensor.last_seen_at = data.occurred_at
+                sensor.last_seen_at = datetime.now(timezone.utc)
 
                 await session.commit()
 
             return
 
         if parsed.kind == "telemetry":
-            # Guarda última telemetria no cache em memória
             import json
             data = json.loads(payload)
-            telemetry_cache[parsed.sensor_id] = {
+            telemetry = {
                 "x": data.get("x"),
                 "y": data.get("y"),
                 "z": data.get("z"),
@@ -206,6 +203,14 @@ class MQTTConsumer:
                 "longitude": data.get("longitude"),
                 "occurred_at": data.get("occurred_at"),
             }
+            async with SessionLocal() as session:
+                if await session.get(Sensor, parsed.sensor_id) is None:
+                    raise ValueError(f"Unknown sensor: {parsed.sensor_id}")
+                statement = sqlite_insert(SensorTelemetry).values(sensor_id=parsed.sensor_id, data=telemetry)
+                await session.execute(statement.on_conflict_do_update(
+                    index_elements=[SensorTelemetry.sensor_id], set_={"data": statement.excluded.data}
+                ))
+                await session.commit()
             return
 
         raise ValueError(

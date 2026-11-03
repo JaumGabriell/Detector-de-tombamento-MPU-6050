@@ -5,7 +5,7 @@ class TelegramAccountResponse(BaseModel):
 
     id: int
     user_id: int
-    username: str
+    username: str | None
     chat_id: int
 
 class TelegramAccountConnection(BaseModel):
