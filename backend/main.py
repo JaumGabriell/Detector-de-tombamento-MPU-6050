@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from dotenv import load_dotenv
 from routes.auth_routes import auth_router
+from routes.admin_routes import admin_router
 from routes.chat_routes import chat_router
 from routes.sensor_routes import sensor_router
 from routes.telegram_routes import telegram_router
@@ -34,13 +35,13 @@ async def lifespan(app: FastAPI):
             print(f"⚠️  Webhook Telegram não configurado: {e}")
     
     # Inicia MQTT Consumer em background
-    try:
+    '''try:
         settings = get_settings()
         consumer = MQTTConsumer(settings)
         mqtt_task = asyncio.create_task(consumer.run())
         print("✅ MQTT Consumer iniciado")
     except Exception as e:
-        print(f"⚠️  MQTT Consumer não iniciado: {e}")
+        print(f"⚠️  MQTT Consumer não iniciado: {e}")'''
     
     yield
     
@@ -54,6 +55,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(auth_router)
+app.include_router(admin_router)
 app.include_router(chat_router)
 app.include_router(sensor_router)
 app.include_router(telegram_router)
