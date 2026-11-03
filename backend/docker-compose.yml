@@ -25,6 +25,7 @@ services:
 
   mqtt_worker:
     container_name: mqtt_worker
+    restart: unless-stopped
     build:
       context: .
       dockerfile: Dockerfile
