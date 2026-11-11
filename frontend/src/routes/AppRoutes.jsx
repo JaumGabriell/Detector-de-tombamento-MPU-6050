@@ -4,6 +4,7 @@ import { GpsPage } from '../pages/GpsPage'
 import { LoginPage } from '../pages/LoginPage'
 import { RegisterPage } from '../pages/RegisterPage'
 import { AdminPage } from '../pages/AdminPage'
+import { AdminRegisterPage } from '../pages/AdminRegisterPage'
 
 function isAuthenticated() {
   try {
@@ -21,7 +22,8 @@ export function AppRoutes() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/home" element={isAuthenticated() ? <HomePage /> : <Navigate to="/login" replace />} />
       <Route path="/gps" element={isAuthenticated() ? <GpsPage /> : <Navigate to="/login" replace />} />
-      <Route path="/admin" element={<AdminPage />} />
+      <Route path="/admin/users/register" element={<AdminRegisterPage />} />
+      <Route path="/admin" element={isAuthenticated() ? <AdminPage /> : <Navigate to="/login" replace />} />
       <Route path="*" element={<Navigate to={isAuthenticated() ? '/home' : '/login'} replace />} />
     </Routes>
   )

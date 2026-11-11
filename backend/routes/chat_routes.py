@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from dependencies import get_session, get_authenticated_user
@@ -20,19 +21,37 @@ def update_chat_id(
     user: User = Depends(get_authenticated_user),
     session: Session = Depends(get_session)
 ):
-    # Salva no user (compatibilidade)
-    user.chat_id = payload.chat_id
-    
-    # Verifica se já existe telegram_account com esse chat_id para o usuário
+    new_chat_id = str(payload.chat_id)
+
+    # Impede que duas contas usem o mesmo chat_id.
     existing = session.scalar(
         select(TelegramAccount).where(
-            TelegramAccount.user_id == user.id,
             TelegramAccount.chat_id == payload.chat_id
         )
     )
-    
-    if not existing:
-        # Cria telegram_account automaticamente
+
+    if existing and existing.user_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Este chat ID já está vinculado a outro usuário.",
+        )
+
+    try:
+        current_chat_id = int(user.chat_id) if user.chat_id is not None else None
+    except (TypeError, ValueError):
+        current_chat_id = None
+
+    account = session.scalar(
+        select(TelegramAccount).where(
+            TelegramAccount.user_id == user.id,
+            TelegramAccount.chat_id == current_chat_id,
+        )
+    )
+
+    if account:
+        if not existing:
+            account.chat_id = payload.chat_id
+    elif not existing:
         telegram_account = TelegramAccount(user.id)
         telegram_account.chat_id = payload.chat_id
         session.add(telegram_account)
@@ -51,6 +70,8 @@ def update_chat_id(
             if not already_linked:
                 sensor.telegram_accounts.append(telegram_account)
 
+    # Mantém o campo legado sincronizado com a conta do Telegram.
+    user.chat_id = new_chat_id
     session.commit()
     session.refresh(user)
 

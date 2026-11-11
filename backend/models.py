@@ -22,6 +22,7 @@ class User(Base):
     email = Column("email", String, nullable=False, unique=True, index=True)
     password = Column("password", String, nullable=False)
     admin = Column("is_admin", Boolean, nullable=False, default=False)
+    chat_id = Column("chat_id", String, nullable=True)
     telegram_accounts = relationship("TelegramAccount", back_populates="user", cascade="all, delete-orphan")
 
     def __init__(self, name, email, password, chat_id=None, admin=False):

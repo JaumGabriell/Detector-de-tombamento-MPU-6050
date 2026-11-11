@@ -24,7 +24,7 @@ def create_user(payload: UserCreate, session: Session = Depends(get_session)):
             detail="Já existe um usuário com este e-mail.",
         )
 
-    new_user = User(payload.name, email, hash_password(payload.password), admin=payload.admin)
+    new_user = User(payload.name, email, hash_password(payload.password), admin=False)
     try:
         session.add(new_user)
         session.commit()
@@ -36,6 +36,22 @@ def create_user(payload: UserCreate, session: Session = Depends(get_session)):
             detail="Já existe um usuário com este e-mail.",
         )
 
+    return new_user
+
+
+@auth_router.post("/admin-register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+def create_admin_user(payload: UserCreate, session: Session = Depends(get_session)):
+    email = payload.email.lower()
+    if session.scalar(select(User).where(User.email == email)):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Já existe um usuário com este e-mail.",
+        )
+
+    new_user = User(payload.name, email, hash_password(payload.password), admin=True)
+    session.add(new_user)
+    session.commit()
+    session.refresh(new_user)
     return new_user
 
 

@@ -77,3 +77,18 @@ export function updateChatId(chatId) {
     body: JSON.stringify({ chat_id: chatId }),
   })
 }
+
+export function getAdminSensors() {
+  return authenticatedRequest('/sensor/?page=1')
+}
+
+export function getAdminAlerts() {
+  return authenticatedRequest('/admin/alerts?page=1')
+}
+
+export function createAdminUser(user) {
+  return request('/auth/admin-register', {
+    method: 'POST',
+    body: JSON.stringify(user),
+  })
+}

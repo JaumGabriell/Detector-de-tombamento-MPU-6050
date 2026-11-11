@@ -65,7 +65,12 @@ export function GpsPage() {
 
   useEffect(() => {
     getCurrentUser()
-      .then(setUser)
+      .then((currentUser) => {
+        setUser(currentUser);
+        if (currentUser.admin) {
+          navigate("/admin", { replace: true });
+        }
+      })
       .catch((error) => {
         if (error.status === 401) {
           localStorage.removeItem("sentinela-auth");
@@ -92,30 +97,35 @@ export function GpsPage() {
       <aside className="sidebar">
         <Brand compact />
         <nav className="sidebar-nav" aria-label="Navegação principal">
-          <NavLink
-            to="/home"
-            className={({ isActive }) =>
-              isActive ? "sidebar-link active" : "sidebar-link"
-            }
-          >
-            Início
-          </NavLink>
-          <NavLink
-            to="/gps"
-            className={({ isActive }) =>
-              isActive ? "sidebar-link active" : "sidebar-link"
-            }
-          >
-            Visualizar GPS
-          </NavLink>
-          <NavLink
-            to="/admin"
-            className={({ isActive }) =>
-              isActive ? "sidebar-link active" : "sidebar-link"
-            }
-          >
-            Administração
-          </NavLink>
+          {user?.admin ? (
+            <NavLink
+              to="/admin"
+              className={({ isActive }) =>
+                isActive ? "sidebar-link active" : "sidebar-link"
+              }
+            >
+              Administração
+            </NavLink>
+          ) : user && (
+            <>
+              <NavLink
+                to="/home"
+                className={({ isActive }) =>
+                  isActive ? "sidebar-link active" : "sidebar-link"
+                }
+              >
+                Início
+              </NavLink>
+              <NavLink
+                to="/gps"
+                className={({ isActive }) =>
+                  isActive ? "sidebar-link active" : "sidebar-link"
+                }
+              >
+                Visualizar GPS
+              </NavLink>
+            </>
+          )}
         </nav>
         <div className="sidebar-footer">
           <span className="online-dot" /> Sistema operacional
